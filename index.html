@@ -28,7 +28,7 @@
   </head>
   <body>
     <button id="enter-ar">Enter AR</button>
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
@@ -42,11 +42,10 @@
 
         try {
           xrSession = await navigator.xr.requestSession("immersive-ar", {
-            requiredFeatures: ["local"],
+            requiredFeatures: ["local-floor"],
           });
 
           const gl = document.createElement("canvas").getContext("webgl", { xrCompatible: true });
-
           renderer = new THREE.WebGLRenderer({ canvas: gl.canvas, context: gl, alpha: true });
           renderer.setSize(window.innerWidth, window.innerHeight);
           renderer.xr.enabled = true;
@@ -56,9 +55,9 @@
           camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
           scene.add(camera);
 
-          xrSession.requestReferenceSpace("local").then((refSpace) => {
+          xrSession.requestReferenceSpace("local-floor").then((refSpace) => {
             xrRefSpace = refSpace;
-            renderer.xr.setReferenceSpaceType("local");
+            renderer.xr.setReferenceSpaceType("local-floor");
             renderer.setAnimationLoop(() => {
               renderer.render(scene, camera);
             });
@@ -81,34 +80,26 @@
         video.play();
 
         let videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-
-        let sphereGeometry = new THREE.SphereGeometry(10, 32, 32);
-        sphereGeometry.scale(-1, 1, 1);
-        let sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
-        portal = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        let planeGeometry = new THREE.PlaneGeometry(2, 3);
+        let planeMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+        portal = new THREE.Mesh(planeGeometry, planeMaterial);
         portal.position.set(0, 1.5, -3);
         scene.add(portal);
       }
 
       function addDoorFrame() {
-        let material = new THREE.MeshPhongMaterial({ color: 0x8B4513 }); // Brown color
+        const doorColor = 0x8B4513; // Brown color
+        const material = new THREE.MeshBasicMaterial({ color: doorColor });
 
-        let verticalGeometry = new THREE.BoxGeometry(0.3, 2.5, 0.1);
-        let horizontalGeometry = new THREE.BoxGeometry(2, 0.3, 0.1);
+        let leftSide = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 0.2), material);
+        let rightSide = new THREE.Mesh(new THREE.BoxGeometry(0.2, 3, 0.2), material);
+        let topSide = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 0.2), material);
 
-        let leftBeam = new THREE.Mesh(verticalGeometry, material);
-        let rightBeam = new THREE.Mesh(verticalGeometry, material);
-        let topBeam = new THREE.Mesh(horizontalGeometry, material);
+        leftSide.position.set(-1.1, 1.5, -3);
+        rightSide.position.set(1.1, 1.5, -3);
+        topSide.position.set(0, 3, -3);
 
-        leftBeam.position.set(-1, 1.5, -3);
-        rightBeam.position.set(1, 1.5, -3);
-        topBeam.position.set(0, 2.75, -3);
-
-        scene.add(leftBeam);
-        scene.add(rightBeam);
-        scene.add(topBeam);
+        scene.add(leftSide, rightSide, topSide);
       }
 
       document.getElementById("enter-ar").addEventListener("click", initAR);
