@@ -65,6 +65,7 @@
           });
 
           addPortal();
+          addDoorFrame();
         } catch (err) {
           console.error("Failed to start AR session:", err);
         }
@@ -72,7 +73,7 @@
 
       function addPortal() {
         let video = document.createElement("video");
-        video.src = "assets/video.mp4"; // Ensure correct path
+        video.src = "assets/video.mp4";
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
         video.muted = true;
@@ -84,12 +85,30 @@
         videoTexture.magFilter = THREE.LinearFilter;
 
         let sphereGeometry = new THREE.SphereGeometry(10, 32, 32);
-        sphereGeometry.scale(-1, 1, 1); // Invert so video appears inside
+        sphereGeometry.scale(-1, 1, 1);
         let sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
         portal = new THREE.Mesh(sphereGeometry, sphereMaterial);
-
-        portal.position.set(0, 1.5, -3); // Adjust position
+        portal.position.set(0, 1.5, -3);
         scene.add(portal);
+      }
+
+      function addDoorFrame() {
+        let material = new THREE.MeshPhongMaterial({ color: 0x8B4513 }); // Brown color
+
+        let verticalGeometry = new THREE.BoxGeometry(0.3, 2.5, 0.1);
+        let horizontalGeometry = new THREE.BoxGeometry(2, 0.3, 0.1);
+
+        let leftBeam = new THREE.Mesh(verticalGeometry, material);
+        let rightBeam = new THREE.Mesh(verticalGeometry, material);
+        let topBeam = new THREE.Mesh(horizontalGeometry, material);
+
+        leftBeam.position.set(-1, 1.5, -3);
+        rightBeam.position.set(1, 1.5, -3);
+        topBeam.position.set(0, 2.75, -3);
+
+        scene.add(leftBeam);
+        scene.add(rightBeam);
+        scene.add(topBeam);
       }
 
       document.getElementById("enter-ar").addEventListener("click", initAR);
