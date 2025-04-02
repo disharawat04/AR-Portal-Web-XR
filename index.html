@@ -66,7 +66,7 @@
           });
 
           addDoorFrame();
-          addPortal();
+          addPortal(); // Portal inside the door
         } catch (err) {
           console.error("Failed to start AR session:", err);
         }
@@ -85,14 +85,12 @@
         videoTexture.minFilter = THREE.LinearFilter;
         videoTexture.magFilter = THREE.LinearFilter;
 
-        let sphereGeometry = new THREE.SphereGeometry(5, 32, 32); // Large sphere
+        let sphereGeometry = new THREE.SphereGeometry(3, 32, 32); // Smaller sphere inside door
         sphereGeometry.scale(-1, 1, 1); // Flip inside out
         let sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
         
         portal = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        portal.position.set(0, 1.5, -6); // Place portal behind the door initially
-        portal.visible = false; // Hide initially
-
+        portal.position.set(0, 1.5, -3); // Inside the door initially
         scene.add(portal);
       }
 
@@ -125,7 +123,7 @@
 
       function enterPortal() {
         doorFrame.visible = false; // Hide the door once entered
-        portal.visible = true; // Show the 360 sphere
+        portal.scale.set(2, 2, 2); // Expand the sphere to surround user
         portal.position.set(camera.position.x, camera.position.y, camera.position.z); // Center on user
       }
 
