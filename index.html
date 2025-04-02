@@ -32,7 +32,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-      let scene, camera, renderer, portal, xrSession, xrRefSpace;
+      let scene, camera, renderer, portal, doorFrame, xrSession, xrRefSpace;
+      let enteredPortal = false;
 
       async function initAR() {
         if (!navigator.xr) {
@@ -60,11 +61,12 @@
             renderer.xr.setReferenceSpaceType("local-floor");
             renderer.setAnimationLoop(() => {
               renderer.render(scene, camera);
+              checkIfUserEnteredPortal();
             });
           });
 
-          addPortal();
           addDoorFrame();
+          addPortal();
         } catch (err) {
           console.error("Failed to start AR session:", err);
         }
@@ -75,15 +77,22 @@
         video.src = "assets/video.mp4";
         video.setAttribute("playsinline", "");
         video.setAttribute("webkit-playsinline", "");
-        video.muted = true;
+        video.muted = false; // Enable sound for a real experience
         video.loop = true;
         video.play();
 
         let videoTexture = new THREE.VideoTexture(video);
-        let planeGeometry = new THREE.PlaneGeometry(2, 3);
-        let planeMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
-        portal = new THREE.Mesh(planeGeometry, planeMaterial);
-        portal.position.set(0, 1.5, -3);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+
+        let sphereGeometry = new THREE.SphereGeometry(5, 32, 32); // Large sphere
+        sphereGeometry.scale(-1, 1, 1); // Flip inside out
+        let sphereMaterial = new THREE.MeshBasicMaterial({ map: videoTexture });
+        
+        portal = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        portal.position.set(0, 1.5, -6); // Place portal behind the door initially
+        portal.visible = false; // Hide initially
+
         scene.add(portal);
       }
 
@@ -99,7 +108,25 @@
         rightSide.position.set(1.1, 1.5, -3);
         topSide.position.set(0, 3, -3);
 
-        scene.add(leftSide, rightSide, topSide);
+        doorFrame = new THREE.Group();
+        doorFrame.add(leftSide, rightSide, topSide);
+        scene.add(doorFrame);
+      }
+
+      function checkIfUserEnteredPortal() {
+        if (!enteredPortal) {
+          let distance = camera.position.distanceTo(doorFrame.position);
+          if (distance < 1.5) { // If user walks through the door
+            enteredPortal = true;
+            enterPortal();
+          }
+        }
+      }
+
+      function enterPortal() {
+        doorFrame.visible = false; // Hide the door once entered
+        portal.visible = true; // Show the 360 sphere
+        portal.position.set(camera.position.x, camera.position.y, camera.position.z); // Center on user
       }
 
       document.getElementById("enter-ar").addEventListener("click", initAR);
